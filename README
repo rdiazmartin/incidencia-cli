@@ -1,0 +1,23 @@
+I have now generated the Spring Boot application with the specified dependencies, database configuration, REST
+  endpoints, and Telegram bot integration with Spring AI.
+
+
+  To run the application:
+   1. Database: Ensure you have a PostgreSQL database running with the name incidencias-cli. You might need to create
+      the database and a user with appropriate permissions.
+   2. Ollama: Make sure Ollama is running and the llama3 model is available (ollama run llama3).
+   3. Telegram Bot Token: Replace YOUR_TELEGRAM_BOT_TOKEN and YOUR_TELEGRAM_BOT_USERNAME in
+      src/main/resources/application.properties with your actual Telegram bot token and username.
+   4. Build and Run: Navigate to /home/roberto/repos/incidencia-cli/incidencia-cli and run ./mvnw spring-boot:run.
+
+
+  Once the application is running, you can interact with it:
+   * REST Endpoints:
+       * GET /api/incidencias?tipo=someType&costeMinimo=100.0
+       * GET /api/list
+       * DELETE /api/remove/{id}
+   * Telegram Bot: Send messages to your bot in Telegram using the format /incidencia [descripción de la incidencia].
+
+
+  Let me know if you'd like me to make any further modifications or test the application.
+
