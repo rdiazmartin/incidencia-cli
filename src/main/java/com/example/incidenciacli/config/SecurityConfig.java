@@ -48,12 +48,12 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService() {
         UserDetails profesional = User.withDefaultPasswordEncoder()
                 .username("profesional")
-                .password("password")
+                .password("profesional")
                 .roles("PROFESIONAL")
                 .build();
         UserDetails admin = User.withDefaultPasswordEncoder()
                 .username("admin")
-                .password("password")
+                .password("admin")
                 .roles("ADMIN")
                 .build();
         return new InMemoryUserDetailsManager(profesional, admin);

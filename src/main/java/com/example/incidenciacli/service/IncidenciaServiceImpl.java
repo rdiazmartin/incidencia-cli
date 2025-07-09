@@ -14,8 +14,8 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     private IncidenciaRepository incidenciaRepository;
 
     @Override
-    public List<Incidencia> getIncidencias(String tipo, Double costeMinimo) {
-        return incidenciaRepository.findByTipoAndCosteGreaterThanEqual(tipo, costeMinimo);
+    public List<Incidencia> getIncidencias(String profesionalRecomendado, Double costeMinimo) {
+        return incidenciaRepository.findByProfesionalRecomendadoContainingAndCosteGreaterThanEqual(profesionalRecomendado, costeMinimo);
     }
 
     @Override

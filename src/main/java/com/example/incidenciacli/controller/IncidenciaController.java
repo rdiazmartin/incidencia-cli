@@ -15,8 +15,8 @@ public class IncidenciaController {
     private IncidenciaService incidenciaService;
 
     @GetMapping("/incidencias")
-    public List<Incidencia> getIncidencias(@RequestParam String tipo, @RequestParam Double costeMinimo) {
-        return incidenciaService.getIncidencias(tipo, costeMinimo);
+    public List<Incidencia> getIncidencias(@RequestParam String profesionalRecomendado, @RequestParam Double costeMinimo) {
+        return incidenciaService.getIncidencias(profesionalRecomendado, costeMinimo);
     }
 
     @GetMapping("/list")

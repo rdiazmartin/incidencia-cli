@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface IncidenciaRepository extends JpaRepository<Incidencia, Long> {
-    List<Incidencia> findByTipoAndCosteGreaterThanEqual(String tipo, Double coste);
+    List<Incidencia> findByProfesionalRecomendadoContainingAndCosteGreaterThanEqual(String profesionalRecomendado, Double coste);
 }
