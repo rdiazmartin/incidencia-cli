@@ -3,10 +3,12 @@ package com.example.incidenciacli.telegram;
 import com.example.incidenciacli.model.Incidencia;
 import com.example.incidenciacli.model.IncidenciaAI;
 import com.example.incidenciacli.repository.IncidenciaRepository;
+import com.example.incidenciacli.tool.IncidentCostTool;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.ai.parser.BeanOutputParser;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -16,7 +18,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -33,13 +34,10 @@ public class TelegramBot extends TelegramLongPollingBot {
     private Resource promptTemplateResource;
 
     @Autowired
-    private ChatClient chatClient;
+    private ChatModel chatModel;
 
     @Autowired
     private IncidenciaRepository incidenciaRepository;
-
-    @Autowired
-    private BeanOutputParser<IncidenciaAI> incidenciaAIBeanOutputParser;
 
     @Override
     public String getBotUsername() {
@@ -69,13 +67,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void processIncident(String incidentDescription, long chatId) {
         try {
+            var incidenciaAIBeanOutputParser = new BeanOutputConverter<>(IncidenciaAI.class);
             String format = incidenciaAIBeanOutputParser.getFormat();
             String promptMessage = promptTemplateResource.getContentAsString(StandardCharsets.UTF_8);
-            PromptTemplate promptTemplate = new PromptTemplate(promptMessage, Map.of("format", format));
-            Prompt prompt = promptTemplate.create(Map.of("incidentDescription", incidentDescription));
-            String aiResponse = chatClient.call(prompt).getResult().getOutput().getContent();
+            PromptTemplate promptTemplate = new PromptTemplate(promptMessage);
+            Prompt prompt = promptTemplate.create(Map.of("incidentDescription", incidentDescription, "format", format));
+            String aiResponse = ChatClient.create(chatModel).prompt(prompt).tools(new IncidentCostTool()).call().content();
 
-            IncidenciaAI incidenciaAI = incidenciaAIBeanOutputParser.parse(aiResponse);
+            IncidenciaAI incidenciaAI = incidenciaAIBeanOutputParser.convert(aiResponse);
 
             Incidencia incidencia = new Incidencia();
             incidencia.setTipo(incidenciaAI.getTipo());
