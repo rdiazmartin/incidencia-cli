@@ -1,5 +1,6 @@
 package com.example.incidenciacli.telegram;
 
+import com.example.incidenciacli.config.TelegramConfig;
 import com.example.incidenciacli.model.Incidencia;
 import com.example.incidenciacli.model.IncidenciaAI;
 import com.example.incidenciacli.repository.IncidenciaRepository;
@@ -24,11 +25,8 @@ import java.util.Map;
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
 
-    @Value("${telegram.bot.username}")
-    private String botUsername;
-
-    @Value("${telegram.bot.token}")
-    private String botToken;
+    @Autowired
+    TelegramConfig telegramConfig;
 
     @Value("classpath:templates/promptTemplate.st")
     private Resource promptTemplateResource;
@@ -41,12 +39,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return botUsername;
+        return telegramConfig.getBotUsername();
     }
 
     @Override
     public String getBotToken() {
-        return botToken;
+        return telegramConfig.getBotToken();
     }
 
     @Override
