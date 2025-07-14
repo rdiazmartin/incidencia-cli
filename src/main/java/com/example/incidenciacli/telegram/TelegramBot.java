@@ -5,11 +5,13 @@ import com.example.incidenciacli.model.Incidencia;
 import com.example.incidenciacli.model.IncidenciaAI;
 import com.example.incidenciacli.repository.IncidenciaRepository;
 import com.example.incidenciacli.tool.IncidentCostTool;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.converter.BeanOutputConverter;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -22,6 +24,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+@Log4j2
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
 
@@ -36,6 +39,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Autowired
     private IncidenciaRepository incidenciaRepository;
+
+    @Autowired
+    private VectorStore vectorStore;
 
     @Override
     public String getBotUsername() {
@@ -67,11 +73,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             var incidenciaAIBeanOutputParser = new BeanOutputConverter<>(IncidenciaAI.class);
             String format = incidenciaAIBeanOutputParser.getFormat();
+            log.info("format: {}" , format);
             String promptMessage = promptTemplateResource.getContentAsString(StandardCharsets.UTF_8);
             PromptTemplate promptTemplate = new PromptTemplate(promptMessage);
             Prompt prompt = promptTemplate.create(Map.of("incidentDescription", incidentDescription, "format", format));
-            String aiResponse = ChatClient.create(chatModel).prompt(prompt).tools(new IncidentCostTool()).call().content();
+            String aiResponse = ChatClient.create(chatModel).prompt(prompt).tools(new IncidentCostTool(vectorStore)).call().content();
 
+            log.info("aiResponse:{}", aiResponse);
             IncidenciaAI incidenciaAI = incidenciaAIBeanOutputParser.convert(aiResponse);
 
             Incidencia incidencia = new Incidencia();

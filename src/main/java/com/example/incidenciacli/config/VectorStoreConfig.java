@@ -29,7 +29,7 @@ public class VectorStoreConfig {
     public VectorStore simpleVectorStore(
             EmbeddingModel embeddingModel,
             // ✅ Aquí está la magia: inyectamos el recurso como parámetro del método.
-            @Value("classpath:databases/costoConcepto.csv") Resource csvFile
+            @Value("classpath:databases/costoConceptos.csv") Resource csvFile
     ) {
         log.info("Creando y cargando el bean del VectorStore desde un parámetro @Value...");
 
