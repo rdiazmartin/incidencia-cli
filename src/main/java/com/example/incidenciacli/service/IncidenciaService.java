@@ -7,4 +7,5 @@ public interface IncidenciaService {
     List<Incidencia> getIncidencias(String profesionalRecomendado, Double costeMinimo);
     List<Incidencia> getAllIncidencias();
     void deleteIncidencia(Long id);
+    void saveIncidencia(Incidencia incidencia);
 }

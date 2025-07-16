@@ -27,4 +27,9 @@ public class IncidenciaServiceImpl implements IncidenciaService {
     public void deleteIncidencia(Long id) {
         incidenciaRepository.deleteById(id);
     }
+
+    @Override
+    public void saveIncidencia(Incidencia incidencia) {
+        incidenciaRepository.save(incidencia);
+    }
 }

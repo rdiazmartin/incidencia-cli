@@ -4,6 +4,8 @@ import com.example.incidenciacli.config.TelegramConfig;
 import com.example.incidenciacli.model.Incidencia;
 import com.example.incidenciacli.model.IncidenciaAI;
 import com.example.incidenciacli.repository.IncidenciaRepository;
+import com.example.incidenciacli.service.AIService;
+import com.example.incidenciacli.service.IncidenciaService;
 import com.example.incidenciacli.tool.IncidentCostTool;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,17 +33,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     @Autowired
     TelegramConfig telegramConfig;
 
-    @Value("classpath:templates/promptTemplate.st")
-    private Resource promptTemplateResource;
+    @Autowired
+    private IncidenciaService incidenciaService;
 
     @Autowired
-    private ChatModel chatModel;
-
-    @Autowired
-    private IncidenciaRepository incidenciaRepository;
-
-    @Autowired
-    private VectorStore vectorStore;
+    AIService aiService;
 
     @Override
     public String getBotUsername() {
@@ -71,31 +67,27 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void processIncident(String incidentDescription, long chatId) {
         try {
-            var incidenciaAIBeanOutputParser = new BeanOutputConverter<>(IncidenciaAI.class);
-            String format = incidenciaAIBeanOutputParser.getFormat();
-            log.info("format: {}" , format);
-            String promptMessage = promptTemplateResource.getContentAsString(StandardCharsets.UTF_8);
-            PromptTemplate promptTemplate = new PromptTemplate(promptMessage);
-            Prompt prompt = promptTemplate.create(Map.of("incidentDescription", incidentDescription, "format", format));
-            String aiResponse = ChatClient.create(chatModel).prompt(prompt).tools(new IncidentCostTool(vectorStore)).call().content();
 
-            log.info("aiResponse:{}", aiResponse);
-            IncidenciaAI incidenciaAI = incidenciaAIBeanOutputParser.convert(aiResponse);
+            var incidenciaAI = aiService.infereIncident(incidentDescription);
+            if (incidenciaAI != null) {
+                Incidencia incidencia = Incidencia.builder()
+                        .tipo(incidenciaAI.getTipo())
+                        .profesionalRecomendado(incidenciaAI.getProfesionalRecomendado())
+                        .coste(incidenciaAI.getCoste())
+                        .descripcion(incidenciaAI.getDescripcion()).build();
+                
+                incidenciaService.saveIncidencia(incidencia);
 
-            Incidencia incidencia = new Incidencia();
-            incidencia.setTipo(incidenciaAI.getTipo());
-            incidencia.setProfesionalRecomendado(incidenciaAI.getProfesionalRecomendado());
-            incidencia.setCoste(incidenciaAI.getCoste());
-            incidencia.setDescripcion(incidenciaAI.getDescripcion());
+                sendMessage(chatId, "Incidencia registrada con éxito:\n" +
+                        "Tipo: " + incidencia.getTipo() + "\n" +
+                        "Profesional: " + incidencia.getProfesionalRecomendado() + "\n" +
+                        "Coste: " + incidencia.getCoste() + "\n" +
+                        "Descripción: " + incidencia.getDescripcion());
 
-            incidenciaRepository.save(incidencia);
-
-            sendMessage(chatId, "Incidencia registrada con éxito:\n" +
-                    "Tipo: " + incidencia.getTipo() + "\n" +
-                    "Profesional: " + incidencia.getProfesionalRecomendado() + "\n" +
-                    "Coste: " + incidencia.getCoste() + "\n" +
-                    "Descripción: " + incidencia.getDescripcion());
-
+            } else {
+                log.error("model returned null for this incident: {}", incidentDescription);
+                sendMessage(chatId, "the model returned null for this incident " + incidentDescription);
+            }
         } catch (Exception e) {
             sendMessage(chatId, "Error al procesar la incidencia: " + e.getMessage());
             e.printStackTrace();
