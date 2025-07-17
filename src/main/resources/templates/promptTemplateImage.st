@@ -1,0 +1,1 @@
+Describe la incidencia que aparece en esta imagen en una frase corta.
