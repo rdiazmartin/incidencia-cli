@@ -37,14 +37,21 @@ public class AIServiceImpl implements AIService {
 
     private VectorStore vectorStore;
 
+    private OllamaOptions imageRequestOptions;
+
+    private OllamaOptions textRequestOptions;
+
     public AIServiceImpl(ChatClient chatClient,
                          VectorStore vectorStore,
                          @Value("classpath:templates/promptTemplate.st") Resource promptTemplateResource,
-                         @Value("classpath:templates/promptTemplateImage.st") Resource promptTemplateResourceImage) {
+                         @Value("classpath:templates/promptTemplateImage.st") Resource promptTemplateResourceImage,
+                         OllamaOptions imageRequestOptions, OllamaOptions textRequestOptions) {
         this.chatClient = chatClient;
         this.vectorStore = vectorStore;
         this.promptTemplateResource = promptTemplateResource;
         this.promptTemplateResourceImage = promptTemplateResourceImage;
+        this.imageRequestOptions = imageRequestOptions;
+        this.textRequestOptions = textRequestOptions;
     }
 
     @Override
@@ -57,7 +64,7 @@ public class AIServiceImpl implements AIService {
             String promptMessage = promptTemplateResource.getContentAsString(StandardCharsets.UTF_8);
             PromptTemplate promptTemplate = new PromptTemplate(promptMessage);
             Prompt prompt = promptTemplate.create(Map.of("incidentDescription", incidentDescription, "format", format));
-            String aiResponse = chatClient.prompt(prompt).tools(new IncidentCostTool(vectorStore)).call().content();
+            String aiResponse = chatClient.prompt(prompt).options(textRequestOptions).tools(new IncidentCostTool(vectorStore)).call().content();
             log.info("aiResponse infereIncident:{}", aiResponse);
 
             return incidenciaAIBeanOutputParser.convert(aiResponse);
@@ -70,7 +77,7 @@ public class AIServiceImpl implements AIService {
 
     @Override
     public String analyzeImage(byte[] imageBytes) {
-        OllamaOptions textRequestOptions = OllamaOptions.builder().model("llama3.2-vision").temperature(0.2d).format(null).build();
+
         ByteArrayResource imageResource = new ByteArrayResource(imageBytes);
         Media imageMedia = new Media(MimeTypeUtils.IMAGE_JPEG, imageResource);
 
@@ -80,7 +87,7 @@ public class AIServiceImpl implements AIService {
 
         var userMessage = UserMessage.builder().text(promptText).media(imageMedia).build();
 
-        Prompt finalPrompt = new Prompt(userMessage, textRequestOptions);
+        Prompt finalPrompt = new Prompt(userMessage, imageRequestOptions);
         return chatClient.prompt(finalPrompt).call().content();
     }
 }

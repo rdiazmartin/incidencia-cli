@@ -19,10 +19,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Log4j2
 @Component
@@ -179,12 +177,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
-
         if (imageBytes == null) {
             log.error("No se pudo descargar la imagen después de {} intentos.", maxRetries);
-            // Manejar el caso en que la imagen no se pudo descargar
-            return null;
         }
+
         return imageBytes;
     }
 }
